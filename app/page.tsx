@@ -38,6 +38,9 @@ import {
   Trophy,
   GraduationCap,
 } from "lucide-react"
+import { Toaster } from "@/components/ui/toaster" // Import Toaster
+import { useToast } from "@/hooks/use-toast" // Import useToast
+import { ThemeToggle } from "@/components/theme-toggle" // Import ThemeToggle
 
 export default function RoboticPortfolio() {
   const [isLoading, setIsLoading] = useState(true)
@@ -45,6 +48,7 @@ export default function RoboticPortfolio() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState(0) // New state for download progress
+  const { toast } = useToast() // Initialize useToast
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 2000)
@@ -69,7 +73,7 @@ export default function RoboticPortfolio() {
     }
 
     window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("change", handleScroll)
   }, [])
 
   const scrollToSection = (sectionId: string) => {
@@ -87,6 +91,13 @@ export default function RoboticPortfolio() {
     try {
       const response = await fetch("/resume/Sujal_Gupta_Resume.pdf")
       if (!response.ok) {
+        // Log the status and statusText for debugging
+        console.error(`Failed to fetch resume: ${response.status} ${response.statusText}`)
+        toast({
+          title: "Download Failed",
+          description: `Could not download resume. Server responded with status: ${response.status}`,
+          variant: "destructive",
+        })
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
@@ -96,6 +107,11 @@ export default function RoboticPortfolio() {
 
       const reader = response.body?.getReader()
       if (!reader) {
+        toast({
+          title: "Download Failed",
+          description: "Failed to read download stream.",
+          variant: "destructive",
+        })
         throw new Error("Failed to get readable stream reader.")
       }
 
@@ -122,6 +138,11 @@ export default function RoboticPortfolio() {
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url) // Clean up the object URL
 
+      toast({
+        title: "Download Complete",
+        description: "Your resume has been downloaded successfully!",
+      })
+
       // Add a small delay for user feedback
       setTimeout(() => {
         setIsDownloading(false)
@@ -129,6 +150,14 @@ export default function RoboticPortfolio() {
       }, 1500)
     } catch (error) {
       console.error("Download failed:", error)
+      // Only show a generic error toast if a more specific one wasn't already shown
+      if (!error.message.includes("HTTP error!") && !error.message.includes("readable stream reader")) {
+        toast({
+          title: "Download Failed",
+          description: "An unexpected error occurred during download.",
+          variant: "destructive",
+        })
+      }
       setIsDownloading(false)
       setDownloadProgress(0) // Reset progress on error
     }
@@ -357,12 +386,16 @@ export default function RoboticPortfolio() {
                   )}
                 </Button>
               </motion.div>
+              <ThemeToggle />
             </div>
 
             {/* Mobile Menu Button */}
-            <button className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+            <div className="flex items-center md:hidden">
+              <ThemeToggle />
+              <button className="ml-4" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -416,7 +449,6 @@ export default function RoboticPortfolio() {
           )}
         </AnimatePresence>
       </motion.nav>
-
       {/* Hero Section */}
       <section id="hero" className="min-h-screen flex items-center justify-center relative overflow-hidden">
         {/* Animated Background */}
@@ -598,7 +630,6 @@ export default function RoboticPortfolio() {
           <ChevronDown className="w-8 h-8 text-white" />
         </motion.div>
       </section>
-
       {/* About Section */}
       <section id="about" className="py-20 bg-gray-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -694,7 +725,6 @@ export default function RoboticPortfolio() {
           </div>
         </div>
       </section>
-
       {/* Projects Section */}
       <section id="projects" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -777,7 +807,6 @@ export default function RoboticPortfolio() {
           </div>
         </div>
       </section>
-
       {/* Skills Section */}
       <section id="skills" className="py-20 bg-gray-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -860,7 +889,6 @@ export default function RoboticPortfolio() {
           </motion.div>
         </div>
       </section>
-
       {/* Certifications Section */}
       <section id="certifications" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1043,7 +1071,6 @@ export default function RoboticPortfolio() {
           </motion.div>
         </div>
       </section>
-
       {/* Contact Section */}
       <section id="contact" className="py-20 bg-gray-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1252,7 +1279,6 @@ export default function RoboticPortfolio() {
           </motion.div>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="bg-black border-t border-white/20 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1269,6 +1295,7 @@ export default function RoboticPortfolio() {
           </div>
         </div>
       </footer>
+      <Toaster /> {/* Toaster component for notifications */}
     </div>
   )
 }
