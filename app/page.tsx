@@ -82,14 +82,19 @@ export default function RoboticPortfolio() {
   const handleDownloadResume = async () => {
     setIsDownloading(true)
     try {
-      // Create a link element and trigger download
+      const response = await fetch("/resume/Sujal_Gupta_Resume.pdf")
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
-      link.href = "/resume/Sujal_Gupta_Resume.pdf"
+      link.href = url
       link.download = "Sujal_Gupta_Resume.pdf"
-      link.target = "_blank"
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+      window.URL.revokeObjectURL(url) // Clean up the object URL
 
       // Add a small delay for user feedback
       setTimeout(() => setIsDownloading(false), 1500)
