@@ -44,6 +44,7 @@ export default function RoboticPortfolio() {
   const [activeSection, setActiveSection] = useState("hero")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [downloadProgress, setDownloadProgress] = useState(0) // New state for download progress
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 2000)
@@ -81,12 +82,37 @@ export default function RoboticPortfolio() {
 
   const handleDownloadResume = async () => {
     setIsDownloading(true)
+    setDownloadProgress(0) // Reset progress at the start
+
     try {
       const response = await fetch("/resume/Sujal_Gupta_Resume.pdf")
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      const blob = await response.blob()
+
+      const contentLength = response.headers.get("Content-Length")
+      const total = contentLength ? Number.parseInt(contentLength, 10) : 0
+      let loaded = 0
+
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error("Failed to get readable stream reader.")
+      }
+
+      const chunks: Uint8Array[] = []
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) {
+          break
+        }
+        chunks.push(value)
+        loaded += value.length
+        if (total > 0) {
+          setDownloadProgress(Math.round((loaded / total) * 100))
+        }
+      }
+
+      const blob = new Blob(chunks, { type: "application/pdf" })
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
       link.href = url
@@ -97,10 +123,14 @@ export default function RoboticPortfolio() {
       window.URL.revokeObjectURL(url) // Clean up the object URL
 
       // Add a small delay for user feedback
-      setTimeout(() => setIsDownloading(false), 1500)
+      setTimeout(() => {
+        setIsDownloading(false)
+        setDownloadProgress(0) // Reset progress after successful download
+      }, 1500)
     } catch (error) {
       console.error("Download failed:", error)
       setIsDownloading(false)
+      setDownloadProgress(0) // Reset progress on error
     }
   }
 
@@ -317,7 +347,7 @@ export default function RoboticPortfolio() {
                       >
                         <Download className="w-4 h-4" />
                       </motion.div>
-                      Downloading...
+                      {downloadProgress > 0 ? `Downloading ${downloadProgress}%` : "Downloading..."}
                     </>
                   ) : (
                     <>
@@ -371,7 +401,7 @@ export default function RoboticPortfolio() {
                         >
                           <Download className="w-4 h-4" />
                         </motion.div>
-                        Downloading...
+                        {downloadProgress > 0 ? `Downloading ${downloadProgress}%` : "Downloading..."}
                       </>
                     ) : (
                       <>
@@ -650,7 +680,7 @@ export default function RoboticPortfolio() {
                       >
                         <Download className="w-4 h-4" />
                       </motion.div>
-                      Downloading Resume...
+                      {downloadProgress > 0 ? `Downloading ${downloadProgress}%` : "Downloading..."}
                     </>
                   ) : (
                     <>
