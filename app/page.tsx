@@ -94,7 +94,15 @@ export default function RoboticPortfolio() {
   }
 
   const handleViewResume = () => {
-    window.open("/resume/Sujal_Gupta_Resume.pdf", "_blank", "noopener,noreferrer")
+    // Open PDF in new tab for viewing
+    const newWindow = window.open("/resume/Sujal_Gupta_Resume.pdf", "_blank", "noopener,noreferrer")
+    if (!newWindow) {
+      toast({
+        title: "Popup Blocked",
+        description: "Please allow popups to view the resume, or try downloading it instead.",
+        variant: "destructive",
+      })
+    }
   }
 
   const handleDownloadResume = async () => {
@@ -102,72 +110,48 @@ export default function RoboticPortfolio() {
     setDownloadProgress(0)
 
     try {
-      const response = await fetch("/resume/Sujal_Gupta_Resume.pdf")
-      if (!response.ok) {
-        console.error(`Failed to fetch resume: ${response.status} ${response.statusText}`)
-        toast({
-          title: "Download Failed",
-          description: `Could not download resume. Server responded with status: ${response.status}`,
-          variant: "destructive",
-        })
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      const contentLength = response.headers.get("Content-Length")
-      const total = contentLength ? Number.parseInt(contentLength, 10) : 0
-      let loaded = 0
-
-      const reader = response.body?.getReader()
-      if (!reader) {
-        toast({
-          title: "Download Failed",
-          description: "Failed to read download stream.",
-          variant: "destructive",
-        })
-        throw new Error("Failed to get readable stream reader.")
-      }
-
-      const chunks: Uint8Array[] = []
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) {
-          break
-        }
-        chunks.push(value)
-        loaded += value.length
-        if (total > 0) {
-          setDownloadProgress(Math.round((loaded / total) * 100))
-        }
-      }
-
-      const blob = new Blob(chunks, { type: "application/pdf" })
-      const url = window.URL.createObjectURL(blob)
+      // Create a direct download link for the PDF
       const link = document.createElement("a")
-      link.href = url
+      link.href = "/resume/Sujal_Gupta_Resume.pdf"
       link.download = "Sujal_Gupta_Resume.pdf"
+      link.target = "_blank"
+
+      // Simulate download progress for better UX
+      const progressInterval = setInterval(() => {
+        setDownloadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval)
+            return 90
+          }
+          return prev + 10
+        })
+      }, 100)
+
+      // Trigger download
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
 
-      toast({
-        title: "Download Complete",
-        description: "Your resume has been downloaded successfully!",
-      })
-
+      // Complete the progress
       setTimeout(() => {
-        setIsDownloading(false)
-        setDownloadProgress(0)
-      }, 1500)
+        setDownloadProgress(100)
+        toast({
+          title: "Download Complete",
+          description: "Your resume has been downloaded successfully!",
+        })
+
+        setTimeout(() => {
+          setIsDownloading(false)
+          setDownloadProgress(0)
+        }, 1000)
+      }, 1000)
     } catch (error) {
       console.error("Download failed:", error)
-      if (!error.message.includes("HTTP error!") && !error.message.includes("readable stream reader")) {
-        toast({
-          title: "Download Failed",
-          description: "An unexpected error occurred during download.",
-          variant: "destructive",
-        })
-      }
+      toast({
+        title: "Download Failed",
+        description: "An error occurred while downloading the resume.",
+        variant: "destructive",
+      })
       setIsDownloading(false)
       setDownloadProgress(0)
     }
@@ -181,9 +165,7 @@ export default function RoboticPortfolio() {
       location: "Bengaluru, Karnataka",
       description: [
         "Coordinated over 10+ student-driven technical and non-technical events, enhancing engagement and participation.",
-        "Led the robotics sub-committee, facilitating hands-on sessions in microcontrollers, robot simulation, and CAD design.",
         "Managed cross-departmental collaboration to support innovation focused activities like Ideathons and tech fests.",
-        "Mentored junior members in robotics tools like Fusion 360 and Robocell.",
       ],
       icon: <Users className="w-6 h-6" />,
       color: "from-blue-400 to-purple-600",
@@ -559,7 +541,7 @@ export default function RoboticPortfolio() {
           <div className="flex justify-between items-center h-16">
             <motion.div whileHover={{ scale: 1.05 }} className="flex items-center space-x-2">
               <Robot className="w-8 h-8 text-black" />
-              <span className="text-2xl font-bold manga-title text-black">SUJAL.GUPTA</span>
+              <span className="text-lg sm:text-xl font-bold manga-title text-black">SUJAL.GUPTA</span>
             </motion.div>
 
             {/* Desktop Navigation */}
@@ -571,7 +553,7 @@ export default function RoboticPortfolio() {
                     onClick={() => scrollToSection(section)}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`capitalize transition-colors manga-text text-lg ${
+                    className={`capitalize transition-colors manga-text text-base ${
                       activeSection === section ? "text-red-600 font-bold" : "text-black hover:text-red-600"
                     }`}
                   >
@@ -586,7 +568,7 @@ export default function RoboticPortfolio() {
                   <Button
                     onClick={handleDownloadResume}
                     disabled={isDownloading}
-                    className="bg-black text-white hover:bg-gray-800 border-4 border-black manga-text text-lg font-bold"
+                    className="bg-black text-white hover:bg-gray-800 border-4 border-black manga-text text-sm font-bold"
                     size="sm"
                   >
                     {isDownloading ? (
@@ -612,7 +594,7 @@ export default function RoboticPortfolio() {
                   <Button
                     onClick={handleViewResume}
                     variant="outline"
-                    className="border-4 border-black text-black hover:bg-black hover:text-white manga-text text-lg font-bold bg-transparent"
+                    className="border-4 border-black text-black hover:bg-black hover:text-white manga-text text-sm font-bold bg-transparent"
                     size="sm"
                   >
                     <Eye className="w-4 h-4 mr-2" />
@@ -648,7 +630,7 @@ export default function RoboticPortfolio() {
                     <button
                       key={section}
                       onClick={() => scrollToSection(section)}
-                      className="block w-full text-left py-2 capitalize manga-text text-lg text-black hover:text-red-600 transition-colors"
+                      className="block w-full text-left py-2 capitalize manga-text text-sm text-black hover:text-red-600 transition-colors"
                     >
                       {section === "hero" ? "HOME" : section.toUpperCase()}
                     </button>
@@ -658,7 +640,7 @@ export default function RoboticPortfolio() {
                   <Button
                     onClick={handleDownloadResume}
                     disabled={isDownloading}
-                    className="w-full bg-black text-white hover:bg-gray-800 manga-text font-bold"
+                    className="w-full bg-black text-white hover:bg-gray-800 manga-text font-bold text-sm"
                     size="sm"
                   >
                     {isDownloading ? "DOWNLOADING..." : "DOWNLOAD RESUME"}
@@ -666,7 +648,7 @@ export default function RoboticPortfolio() {
                   <Button
                     onClick={handleViewResume}
                     variant="outline"
-                    className="w-full border-4 border-black text-black hover:bg-black hover:text-white manga-text font-bold bg-transparent"
+                    className="w-full border-4 border-black text-black hover:bg-black hover:text-white manga-text font-bold bg-transparent text-sm"
                     size="sm"
                   >
                     VIEW RESUME
@@ -681,12 +663,12 @@ export default function RoboticPortfolio() {
       {/* Hero Section */}
       <section
         id="hero"
-        className="min-h-screen flex items-center justify-center relative overflow-hidden manga-speed-lines"
+        className="min-h-screen flex items-center justify-center relative overflow-hidden manga-speed-lines pt-20"
       >
         <div className="absolute inset-0 manga-halftone opacity-10" />
 
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="min-h-screen flex items-center justify-center py-20">
+          <div className="min-h-screen flex items-center justify-center py-24">
             <div className="grid lg:grid-cols-2 gap-12 items-center justify-items-center w-full">
               {/* Left Column - Text Content */}
               <motion.div
