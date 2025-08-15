@@ -14,7 +14,7 @@ Any changes you make to your deployed app will be automatically pushed to this r
 
 Your project is live at:
 
-**[https://vercel.com/sujal861s-projects/v0-robotic-portfolio-website](https://vercel.com/sujal861s-projects/v0-robotic-portfolio-website)**
+(https://portfolio-6lpo.vercel.app/)
 
 ## Build your app
 
